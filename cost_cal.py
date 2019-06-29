@@ -85,8 +85,8 @@ def get_cost(source_word,target_word):
     return total_cost
 
 if __name__ == "__main__":
-    n1_e ='XAAAA'
-    n2_e = 'XAA8AB'
+    n1_e ='(('
+    n2_e = '(\'(\''
 
     x = [1,2,3,4,5]
-    get_cost(n1_e,n2_e)
+    print(get_cost(n1_e,n2_e))
