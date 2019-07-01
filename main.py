@@ -6,12 +6,12 @@ from collections import Counter
 import math
 import json
 import Levenshtein as lev
-import cost_cal
 import matplotlib.pyplot as plt
 from itertools import combinations 
+import merge
 
 df = pd.read_csv("edge_list.csv")
-k = 4
+k = 7
 
 df = df.sort_values(by=['timestamp'])
 df['timestamp'] = pd.to_datetime(df['timestamp'], infer_datetime_format=True )
@@ -51,82 +51,94 @@ for node in neighbour_vector:
     else:
         groups[sig].append(node[0])
 
-# for k,v in groups.items():
-    # print(k,[x[0] for x in v])
-# print()
+
+merges = []
 groups = sorted(groups.items(),key = lambda x: len(x[1]),reverse = True) #sort group with highest size to lowest
-# for k in groups:
-    # print(k[0],k[1])
-# print()
-
-candidate_list = []
-# while groups:
-    # group = groups.pop()
-for group in groups:
-    candidates = []
-    if len(group[1]) >= k: continue
-    for sub_group in groups:
-        if group[0] == sub_group[0]: continue
-        # print(group[0],sub_group[0])
-        cost = cost_cal.get_cost(group[0],sub_group[0])
-        candidates.append((sub_group,cost))
-    candidates.sort(key = lambda x: (x[1],-len(x[0][1])))
-    # print(group)#,"--",candidates)
-    candidate_list.append((group[0],len(group[1]),[(x[0][0],round(x[1],2),len(x[0][1])) for x in candidates]))
-DG=nx.DiGraph()
-attributes = {}
-for c in candidate_list:
-    main_string = c[0]
-    main_size = c[1]
-    match = c[2][0][0]
-    cost = c[2][0][1]
-    match_size = c[2][0][2]
-    attributes.update({main_string:main_size})
-    attributes.update({match:match_size})
-    DG.add_weighted_edges_from([(main_string,match,cost)])
+merge.merge_groups(groups,k)
 
 
-pos = nx.spring_layout(DG)
-nx.set_node_attributes(DG,attributes,"size")
-nx.draw(DG,pos = pos,with_labels=True,font_size=8,labels = dict(attributes))
-nx.draw_networkx_edge_labels(DG,pos=pos,font_size=8)
 
-sub_graphs = nx.weakly_connected_component_subgraphs(DG)
 
-for i, sg in enumerate(sub_graphs):
-    # print("subgraph {} has {} nodes".format(i, len(sg)))
-    print("Nodes:", sg.nodes())
-    all_nodes = list(sg.nodes())
-    all_nodes.sort()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     # print("\tEdges:", [sg[k[0]][k[1]] for k in sg.edges()])
-    sg.add_node("start")
-    sg.add_node("end")
-    sg.add_edges_from([(n,"end") for n in sg.nodes()])
-    sg.add_edges_from([("start",n) for n in sg.nodes()])
-    all_paths = []
-    for path in nx.all_simple_paths(sg, source="start", target="end"):
-        if len(path)>3: #start+end+1 node no use
+    # sg.add_node("start")
+    # sg.add_node("end")
+    # sg.add_edges_from([(n,"end") for n in sg.nodes()])
+    # sg.add_edges_from([("start",n) for n in sg.nodes()])
+    # all_paths = []
+    # for path in nx.all_simple_paths(sg, source="start", target="end"):
+    #     if len(path)>3: #start+end+1 node no use
 
-            size_sum = sum([sg.node[x]['size'] for x in path[1:-1]])
-            cost_sum = sum([sg[path[i]][path[i+1]]['weight'] for i in range(1,len(path)-2)])
-            all_paths.append((path[1:-1],size_sum,cost_sum))
-    all_paths.sort(key= lambda x : x[2])
+    #         size_sum = sum([sg.node[x]['size'] for x in path[1:-1]])
+    #         cost_sum = sum([sg[path[i]][path[i+1]]['weight'] for i in range(1,len(path)-2)])
+    #         all_paths.append((path[1:-1],size_sum,cost_sum)) # connected path, size of path, sum of costs
+    # all_paths.sort(key= lambda x : x[2]) #sort by sum of costs lesser to higher
     
-    for path1 in all_paths:
-        
-        matched_set = path1[0]
-        groups = [path1]
-        for path2 in all_paths:
-            if any(x in matched_set for x in path2[0]):
-                continue
-            else:
-                matched_set += path2[0]
-                groups.append(path2)
-        matched_set.sort()
-        print(matched_set)
-        print(matched_set == all_nodes)
+    # #for each path find non overalaping path such that cost is minimum and all nodes included
+    # merged_groups = []
+    # posible_set = []
 
-    print("--------------------\n")
+    # print("------------")
+    # print("all paths",all_paths)
+    # for i, path1 in enumerate(all_paths):
+    #     matched_set = path1[0] 
+    #     groups = [path1]
+    #     all_paths_check = all_paths[i+1:].copy()
+    #     all_paths_check.append(([],0,0)) #cheking itself with empty
+    #     for path2 in all_paths_check:        
+    #         print(path1,"against",path2)
+    #         if any(x in matched_set for x in path2[0]):
+    #             print("overlapped")
+    #         else:
+    #             print("non overlap")
+    #             posible_set.append((matched_set,path2[2])) #node set and cost
+
+    #         print()
+    #             continue
+    #         else:
+    #             print("non overlap")
+    #             matched_set += path2[0]
+    #             groups.append(path2)
+    #     matched_set.sort()
+    #     # print(matched_set)
+    #     # print(matched_set == all_nodes)
+    #     if matched_set == all_nodes:
+    #         posible_set.append((matched_set,path2[2])) #node set and cost
+    
+    # print("possible set")
+    # for p in posible_set:
+    #     print(p[0],p[1])
+    # # merged_groups.append(sorted(posible_set,lambda x: x[1])[0]) #append the lowest cost set
+
+    # print("--------------------\n")
 
 
 # all_paths = []

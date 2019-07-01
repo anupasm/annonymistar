@@ -23,7 +23,7 @@ def exec_op(op,source_word,pos,char):
     consecutive_count_1 = get_consecutive_count(part1[::-1],char)
     consecutive_count_2 = 0 #get_consecutive_count(part2,char)
     total = consecutive_count_1+consecutive_count_2+1 #min 1 (denote the inserted char)
-    cost = COST_WEIGHTS[op]/(total)
+    cost = (COST_WEIGHTS[op]*len(source_word))/total
     print(op,"total",total,"weight",COST_WEIGHTS[op],"cost",cost)
     # print(part1,part2,cost)
     return part1,part2,cost
