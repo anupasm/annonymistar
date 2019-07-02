@@ -61,32 +61,37 @@ def exec_ops(source_word,target_word,cost):
 #     return adjusted_word,cost
 
 
-def get_cost(source_word,target_word):
+def get_cost(source_word,target_word,action_count=None):
     ops = lev.editops(source_word,target_word)
-    # print(ops)
+    print(ops)
     total_cost = 0
     for op in ops:
         action = op[0]
+        if action_count: action_count[action] +=1 
         source_pos = op[1]
         target_pos = op[2]
         char = source_word[source_pos] if not action == 'insert' else target_word[target_pos]
-        # print(char)
+        print(char)
         part1 = source_word[:source_pos]
         part2 = source_word[source_pos:] if action == 'insert' else source_word[source_pos+1:]#if pos < len(source_word) else ''  
-        # print(action,part1,part2)
+        print(action,part1,part2)
         consecutive_count_1 = get_consecutive_count(part1[::-1],char)
         consecutive_count_2 = get_consecutive_count(part2,char)
         total = consecutive_count_1+consecutive_count_2+1 #min 1 (denote the inserted/replaced/deleted char)
-        # print(op,"total",total,"weight",COST_WEIGHTS[action])
-        cost = COST_WEIGHTS[action]/(total) if not action == 'replace' else COST_WEIGHTS[action]*(total)
+        source_len = len(source_word)
+        print(op,"total",total,"weight",COST_WEIGHTS[action],"source len",source_len)
+        cost = COST_WEIGHTS[action]/(total/source_len) if action == 'delete' else COST_WEIGHTS[action]*(total/source_len)
         total_cost += cost
-        # print("cost",cost)
-    # print(total_cost)
-    return total_cost
+        print("cost",cost)
+    print(total_cost)
+    if not action_count:
+        return total_cost
+    return total_cost,action_count 
+
 
 if __name__ == "__main__":
-    n1_e ='(('
-    n2_e = '(\'(\''
+    n1_e ='AAAAAAAAAAA'
+    n2_e = '8=AAA8AA888888AAAA==AA8'
 
     x = [1,2,3,4,5]
     print(get_cost(n1_e,n2_e))

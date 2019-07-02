@@ -11,7 +11,8 @@ from itertools import combinations
 import merge
 
 df = pd.read_csv("edge_list.csv")
-k = 7
+k = 4
+
 
 df = df.sort_values(by=['timestamp'])
 df['timestamp'] = pd.to_datetime(df['timestamp'], infer_datetime_format=True )

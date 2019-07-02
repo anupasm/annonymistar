@@ -55,14 +55,15 @@ def merge(return_groups,sub_graphs,merged_group_list):
     # print(temp)
     for sg in sub_graphs:
         sizes = nx.get_node_attributes(sg,'size')
-        sorted_edges = sorted(sg.edges(data=True),key= lambda x: (x[2]['weight'])/(sizes[x[0]]+sizes[x[1]]))
+        sorted_edges = sorted(sg.edges(data=True),key= lambda x: (x[2]['weight']))#/(sizes[x[0]]+sizes[x[1]]))
         print("sorted_edges",sorted_edges)
         merge = sorted_edges[0] #least cost
         cost += merge[2]['weight']
         print(merge[0], "goes to",merge[1],"at cost",merge[2]['weight'],"total",cost)
         replacing_group = temp.pop(merge[0]) 
         temp[merge[1]] += replacing_group
-        merged_group_list[merge[0]] = merge[1]
+        if merge[2]['weight'] > 5: print("Higher cost here")
+        merged_group_list[merge[0]] = (merge[1],merge[2]['weight'],(sizes[merge[1]]+sizes[merge[0]]))
 
         print("edges",sg.edges())
         print()
@@ -93,7 +94,7 @@ def merge_groups(groups,k):
         sub_graphs = get_sub_graphs(candidate_list)
 
         return_groups, cost,merged_group_list = merge(return_groups,sub_graphs,merged_group_list)
-        
+        print("merging info")
         for m,v in merged_group_list.items():
             print(m,v)
         group_count = len(return_groups)
@@ -102,6 +103,16 @@ def merge_groups(groups,k):
         print("^^^^^^^^^^^^",group_count,total_cost)
         print()
 
+    for r in return_groups:
+        print(r)
+    print("--------------------")
     print(len(return_groups),total_cost)
 
+    action_count = {'insert':0,'replace':0,'delete':0}
+    for m,v in merged_group_list.items():
         
+        print(m,v)
+        cost, action_count = cost_cal.get_cost(m,v[0],action_count)
+        print("--------------------")
+    
+    print(action_count)
