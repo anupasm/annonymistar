@@ -109,10 +109,10 @@ def merge_groups(groups,k):
     print(len(return_groups),total_cost)
 
     action_count = {'insert':0,'replace':0,'delete':0}
+    total = 0
     for m,v in merged_group_list.items():
-        
         print(m,v)
         cost, action_count = cost_cal.get_cost(m,v[0],action_count)
-        print("--------------------")
-    
-    print(action_count)
+        total += cost
+
+    print(action_count,total)

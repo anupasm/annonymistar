@@ -1,6 +1,4 @@
 import pandas as pd
-from sklearn_pandas import DataFrameMapper
-from sklearn.preprocessing import LabelEncoder
 import networkx as nx
 from collections import Counter
 import math
@@ -9,27 +7,42 @@ import Levenshtein as lev
 import matplotlib.pyplot as plt
 from itertools import combinations 
 import merge
+from sklearn.preprocessing import LabelEncoder
+from sklearn_pandas import DataFrameMapper
 
-df = pd.read_csv("edge_list.csv")
 k = 4
 
-
+"""
+Read the csv file(source,target,timestamp) and relabel vertices
+"""
+df = pd.read_csv("edge_list.csv")
 df = df.sort_values(by=['timestamp'])
 df['timestamp'] = pd.to_datetime(df['timestamp'], infer_datetime_format=True )
 encoders = [(["source"], LabelEncoder()), (["target"], LabelEncoder())]
 mapper = DataFrameMapper(encoders, df_out=True)
 new_cols = mapper.fit_transform(df.copy())
 df = pd.concat([df.drop(columns=["source", "target"]), new_cols], axis="columns")
-u_user_list = df['source'].unique()
-degree_vector = {user:[] for user in u_user_list}
-# print(degree_vector)
+
+
+"""
+V_u(G): User set
+V_g(G): Group set
+"""
+V_u = df['source'].unique()
+V_g = df['target'].unique() #V_g: group set
+
+degree_vector = {user:[] for user in V_u} #initialize degree
+
+"""
+G = G_1,G_2 ... G_T
+Group data week by week.
+"""
 per_day_data = [g for n, g in df.groupby(pd.Grouper(key='timestamp',freq='W'))]
 week_neigbours = []
 first_week = per_day_data[0]
 
-target_nodes = df['target'].unique()
 G=nx.from_pandas_edgelist(first_week, 'source', 'target',create_using = nx.MultiDiGraph(),edge_attr=True)
-user_list = [ u for u in G.node if not u in target_nodes]
+user_list = [ u for u in G.node if not u in V_g] #V_u(G_t): user set of this week
 neighbour_vector = {user:[] for user in user_list}
 cost_vector = {user:[] for user in user_list}
 annonymized_vector = []
