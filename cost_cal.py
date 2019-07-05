@@ -3,8 +3,8 @@ import Levenshtein as lev
 
 COST_WEIGHTS = {
     "insert":1,
-    "replace":5,
-    "delete": 3
+    "replace":3,
+    "delete": 2
 }
 
 def get_consecutive_count(word,char):
@@ -24,6 +24,7 @@ def exec_op(op,source_word,pos,char):
     consecutive_count_2 = 0 #get_consecutive_count(part2,char)
     total = consecutive_count_1+consecutive_count_2+1 #min 1 (denote the inserted char)
     cost = (COST_WEIGHTS[op]*len(source_word))/total
+    # cost = (COST_WEIGHTS[op])/total
     print(op,"total",total,"weight",COST_WEIGHTS[op],"cost",cost)
     # print(part1,part2,cost)
     return part1,part2,cost
@@ -62,6 +63,9 @@ def exec_ops(source_word,target_word,cost):
 
 flag = 0
 
+def cost_to_create(source,size):
+    return get_cost(source,'') * size
+
 def get_cost(source_word,target_word,action_count=None):
     ops = lev.editops(source_word,target_word)
     if flag: print(ops)
@@ -91,8 +95,20 @@ def get_cost(source_word,target_word,action_count=None):
 
 
 if __name__ == "__main__":
-    n1_e =':::::::::::'
-    n2_e = '::'
+    n1_e ='ssss'
+    n2_e = 'sssst'
+
+    x = [1,2,3,4,5]
+    print(get_cost(n1_e,n2_e))
+
+    n1_e ='sssst'
+    n2_e = 'ssss'
+
+    x = [1,2,3,4,5]
+    print(get_cost(n1_e,n2_e))
+
+    n1_e ='sssst'
+    n2_e = 'sssstt'
 
     x = [1,2,3,4,5]
     print(get_cost(n1_e,n2_e))
