@@ -15,22 +15,6 @@ from scipy import stats
 k = 2
 flag = 0
 
-def normalized_hist(freq_list):
-    imhist,bins = np.histogram(freq_list,20,density=True)
-    stats.ks_2samp(, rvs2)
-    rvs1 = stats.norm.rvs(size=5, loc=0., scale=1)
-    print(rvs1)
-    print(imhist)
-    print(bins)
-
-def plot_hist(c,id,type):
-    plt.clf()
-    plt.bar(c.keys(),c.values())
-    plt.xlabel('Neighbour Size')
-    plt.ylabel('Users')
-    plt.yscale('log')
-    plt.savefig(type+'_week_'+str(id)+'.png')
-
 def get_group_costs(return_groups,group_count,k):
     candidate_list = []
     for group in return_groups:
@@ -132,6 +116,7 @@ def merge_groups(groups,k):
     For newly created nodes
     """
     dummy = 0
+    iterations = 0
     while True:
 
         """
@@ -157,6 +142,7 @@ def merge_groups(groups,k):
         group_count = len(return_groups) #update count
         total_cost += cost #update cost
 
+        iterations += 1
 
     action_count = {'insert':0,'replace':0,'delete':0}
     total = 0
@@ -165,9 +151,9 @@ def merge_groups(groups,k):
         cost, action_count = cost_cal.get_cost(m,v[0],action_count)
         total += cost
 
-    print(action_count,total)
+    
 
-    return return_groups
+    return return_groups,iterations,action_count,total
 
 """
 Read the csv file(source,target,timestamp) and relabel vertices
@@ -201,6 +187,9 @@ per_week_data = [g for n, g in df.groupby(pd.Grouper(key='timestamp',freq='W'))]
 
 
 final_list = []
+neighbour_freq_orig = {}
+neighbour_freq_proc = {}
+output = {}
 """
 For every t generate graph G_t and find k-annonymity
 """
@@ -235,8 +224,9 @@ for i,week in enumerate(per_week_data):
     # c = Counter(data)
     # plot_hist(c,i,'original')
     # print("Week",i,": Neighbour Counts:",dict(c))
+    
+    neighbour_freq_orig[i] =[len(u[1]) for u in neighbour_vector]
 
-    normalized_hist([len(u[1]) for u in neighbour_vector])
     """
     Encode neighbour vector into Unicode strings.
     Group Users into string/neighbourhood groups
@@ -252,10 +242,10 @@ for i,week in enumerate(per_week_data):
 
     #sort group with highest size to lowest
     groups = sorted(groups.items(),key = lambda x: len(x[1]),reverse = True) 
-    week_final = merge_groups(groups,k)
+    week_final,iterations,action_counts,total = merge_groups(groups,k)
     final_list.append(week_final)
-    break
-
+    output[i] = {"action_counts":action_counts,"total":total,"iterations": iterations}
+    # break
 """
 Create the new k-anonymous graph
 """
@@ -269,14 +259,35 @@ for i,week in enumerate(final_list):
             for an in actual_neighbours:
                 G_dash.add_edge(node,an)
 
-    c = Counter(frequency)
-    plot_hist(c,i,'processed')
-    
-    print("Processed Week",i,": Neighbour Counts:",dict(c))
+    neighbour_freq_proc[i] = frequency
+
 
 # nx.write_gexf(G_dash, "output.gexf")
 
+"""
+Combined histrogram
+"""
 
+for i in range(len(neighbour_freq_orig)):
+    print("org",Counter(neighbour_freq_orig[i]))
+    print("proc",Counter(neighbour_freq_proc[i]))
+    print()
+    max_o = max(list(Counter(neighbour_freq_proc[i])))
+    max_p = max(list(Counter(neighbour_freq_proc[i])))
+    plt.clf()
+    plt.style.use('seaborn-deep')
+    plt.yscale('log')
+    plt.xlabel('Interaction Count')
+    plt.title('Week'+str(i))
+    plt.ylabel('User Count')
+    # bins = np.linspace(0, max(max_o,max_p), max(max_o,max_p))
+    bins = np.linspace(0, 50,50)
+
+    plt.hist([neighbour_freq_orig[i], neighbour_freq_proc[i]], bins, label=['G_t', 'G_t\''])
+    plt.legend(loc='upper right')
+    plt.savefig(str(k)+'/week_'+str(i)+'.png')
+
+print({k:output})
 nx.write_edgelist(G_org, "input.csv", delimiter=',',data=False)
 nx.write_edgelist(G_dash, "output.csv", delimiter=',',data=False)
 
